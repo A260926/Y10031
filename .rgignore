@@ -1,0 +1,13 @@
+.github/**
+.gitignore
+.gitlab-ci.yml
+README.md
+CHANGELOG.md
+yarn.lock
+pnpm-lock.yaml
+LICENSE
+tests/**/__snapshots__/
+
+tests/
+examples/
+docs/

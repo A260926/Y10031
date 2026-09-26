@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".vitepress/",
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "Bundler",
+    "noImplicitAny": false
+  },
+  "include": ["./.vitepress/**/*", "./.vitepress/**/*.vue"],
+  "exclude": ["node_modules", "dist"]
+}

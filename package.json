@@ -1,0 +1,75 @@
+{
+  "name": "@listr2/root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepository for listr2.",
+  "license": "MIT",
+  "repository": "https://github.com/listr2/listr2",
+  "type": "module",
+  "author": {
+    "name": "Cenk Kilic",
+    "email": "cenk@kilic.dev",
+    "url": "https://cenk.kilic.dev"
+  },
+  "engines": {
+    "node": ">=22.13.0",
+    "pnpm": ">=10.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "examples",
+    "docs"
+  ],
+  "scripts": {
+    "clean": "rimraf node_modules pnpm-lock.yaml packages/*/node_modules examples/node_modules docs/node_modules",
+    "dev:start": "pnpm run --parallel -r dev:start",
+    "build": "pnpm run -r build",
+    "docs:build": "pnpm run --filter @listr2/docs docs:build",
+    "format": "pnpm run --parallel -r format",
+    "lint": "pnpm run --parallel -r lint",
+    "lint:ci": "pnpm run -r --workspace-concurrency=1 lint",
+    "test": "pnpm run --parallel -r test",
+    "test:cov": "pnpm run --parallel -r test:cov"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm exec lint-staged",
+    "prepare-commit-msg": "[ -t 1 ] && exec < /dev/tty && git cz --hook || true",
+    "pre-push": "pnpm run test"
+  },
+  "lint-staged": {
+    "*.{ts,js,tsx,jsx,spec.ts}": [
+      "prettier --log-level warn --write",
+      "eslint --fix"
+    ],
+    "*.{json,md}": [
+      "prettier --log-level warn --write"
+    ]
+  },
+  "devDependencies": {
+    "@cenk1cenk2/cz-cc": "^3.0.0",
+    "@cenk1cenk2/eslint-config": "^3.3.2",
+    "@jest/globals": "^30.5.1",
+    "@swc/core": "^1.16.2",
+    "@tsconfig/node22": "^22.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.4.1",
+    "eslint": "^10.10.0",
+    "execa": "^10.0.1",
+    "jest": "^30.5.1",
+    "jest-mock-process": "^2.0.0",
+    "lint-staged": "^17.5.0",
+    "prettier": "^3.9.6",
+    "rimraf": "^6.1.3",
+    "simple-git-hooks": "^2.14.0",
+    "ts-jest": "^29.4.12",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "tsdown": "0.23.0",
+    "typescript": "^6.0.3"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/@cenk1cenk2/cz-cc"
+    }
+  }
+}

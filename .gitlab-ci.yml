@@ -1,0 +1,156 @@
+---
+default:
+  interruptible: true
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ /^renovate\//
+      when: never
+    - when: always
+
+stages:
+  - install
+  - build
+  - test
+  - publish
+  - docs
+  - post
+
+variables:
+  NODE_VERSION: 26-alpine
+  NODE_PACKAGE_MANAGER: pnpm
+  NODE_INSTALL_ARGS: --ignore-scripts
+  NODE_LINT_COMMAND: lint:ci
+  NODE_TEST_COMMAND: test
+  GITHUB_STATUS_PROJECT: listr2/listr2
+  SKIP_SIMPLE_GIT_HOOKS: '1'
+
+include:
+  - project: devops/pipelines
+    ref: node@2.0.1
+    file:
+      - /node/install.gitlab-ci.yml
+      - /node/build.gitlab-ci.yml
+      - /node/lint.gitlab-ci.yml
+      - /node/test.gitlab-ci.yml
+      - /node/run.gitlab-ci.yml
+
+  - project: devops/pipelines
+    ref: semantic-release@2.0.1
+    file:
+      - /semantic-release/publish.gitlab-ci.yml
+
+  - project: devops/pipelines
+    ref: buildah@2.0.1
+    file:
+      - /buildah/build.gitlab-ci.yml
+      - /buildah/registry-gitlab.gitlab-ci.yml
+
+  - project: devops/pipelines
+    ref: references@1.2.3
+    file:
+      - /references/gh-status.gitlab-ci.yml
+
+install:
+  stage: install
+  extends: .node-install
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      interruptible: true
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: '$CI_COMMIT_BRANCH =~ /^(next|next-major|alpha|beta|rc)$/'
+    - if: $CI_COMMIT_TAG
+lint:
+  stage: build
+  extends: .node-lint
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      interruptible: true
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: '$CI_COMMIT_BRANCH =~ /^(next|next-major|alpha|beta|rc)$/'
+    - if: $CI_COMMIT_TAG
+build:
+  stage: build
+  extends: .node-build
+  needs:
+    - install
+  dependencies:
+    - install
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      interruptible: true
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: '$CI_COMMIT_BRANCH =~ /^(next|next-major|alpha|beta|rc)$/'
+    - if: $CI_COMMIT_TAG
+test:
+  stage: test
+  extends: .node-test
+  parallel:
+    matrix:
+      - NODE_VERSION: 26-alpine
+      - NODE_VERSION: 24-alpine
+      - NODE_VERSION: 22-alpine
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      interruptible: true
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: '$CI_COMMIT_BRANCH =~ /^(next|next-major|alpha|beta|rc)$/'
+    - if: $CI_COMMIT_TAG
+semantic-release:
+  stage: publish
+  extends: .semantic-release
+  variables:
+    SEMANTIC_RELEASE_WORKSPACE: 'true'
+  needs:
+    - build
+    - lint
+    - test
+  dependencies:
+    - build
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: '$CI_COMMIT_BRANCH =~ /^(next|next-major|alpha|beta|rc)$/'
+
+build-docs:
+  stage: docs
+  extends: .node-run
+  before_script:
+    - apk update
+    - apk add git
+  variables:
+    NODE_COMMAND_SCRIPT: docs:build
+    NODE_COMMAND_CWD: ./docs
+    # full history so VitePress `lastUpdated` reflects each file's real last commit, not a shallow-clone uniform date
+    GIT_DEPTH: '0'
+  artifacts:
+    paths:
+      - ./docs/dist
+  needs:
+    - install
+    - build
+    - semantic-release
+  dependencies:
+    - install
+    - build
+    - semantic-release
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      when: on_success
+    - when: never
+
+container-docs:
+  stage: post
+  extends: .container-build
+  variables:
+    CONTAINER_FILE_NAME: Dockerfile
+    CONTAINER_FILE_CONTEXT: ./docs
+    CONTAINER_IMAGE_NAME: docs-listr2
+    CONTAINER_IMAGE_TAGS: latest
+  needs:
+    - build-docs
+  dependencies:
+    - build-docs
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      when: on_success
+    - when: never

@@ -1,0 +1,79 @@
+# Compiled Output
+node_modules
+dist
+.turbo
+
+# tests
+coverage
+
+# Logs
+logs
+*.log
+*-debug.log*
+*-error.log*
+/.nyc_output
+
+# OS
+.DS_Store
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# tsbuild
+tsconfig*.tsbuildinfo
+
+# Node Package Manager
+.npm
+.npmrc
+package-lock.json
+
+# API Extractor
+/temp
+
+# --- 依赖与构建产物（不进交付快照）---
+node_modules/
+bower_components/
+.pnp.*
+dist/
+build/
+out/
+target/
+.next/
+.nuxt/
+.svelte-kit/
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+vendor/bundle/
+Pods/
+.gradle/
+.cargo/
+.env
+.env.*
+coverage/
+.coverage
+.nyc_output/
+.cache/
+.parcel-cache/
+.vite/
+.turbo/
+*.tsbuildinfo
